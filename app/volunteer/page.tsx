@@ -1,115 +1,44 @@
 "use client";
 
 import { useState } from "react";
+import { registerVolunteer } from "../actions";
 import Navbar from "../components/Navbar";
 
 export default function VolunteerPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("");
-  const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+    const result = await registerVolunteer(new FormData(event.currentTarget));
 
-    const volunteer = {
-      name,
-      email,
-      phone,
-      city,
-      reason,
-      date: new Date().toLocaleString(),
-    };
+    if ("error" in result) {
+      setError(result.error);
+      return;
+    }
 
-    const existingVolunteers =
-      JSON.parse(localStorage.getItem("volunteers") || "[]");
-
-    existingVolunteers.push(volunteer);
-
-    localStorage.setItem(
-      "volunteers",
-      JSON.stringify(existingVolunteers)
-    );
-
-    setMessage("✅ Volunteer registered successfully!");
-
-    setName("");
-    setEmail("");
-    setPhone("");
-    setCity("");
-    setReason("");
-  };
+    event.currentTarget.reset();
+    setMessage(result.success);
+  }
 
   return (
     <>
       <Navbar />
-
       <main className="p-10">
-        <h1 className="text-4xl font-bold mb-6">
-          Volunteer Registration
-        </h1>
-
-        <form
-          onSubmit={handleSubmit}
-          className="max-w-xl space-y-4"
-        >
-          <input
-            type="text"
-            placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="City"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <textarea
-            rows={4}
-            placeholder="Why do you want to volunteer?"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-6 py-3 rounded"
-          >
-            Register
-          </button>
-
-          {message && (
-            <p className="text-green-600 font-bold">
-              {message}
-            </p>
-          )}
+        <h1 className="mb-6 text-4xl font-bold">Volunteer Registration</h1>
+        <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
+          <input name="name" type="text" placeholder="Full Name" maxLength={120} required className="w-full rounded border p-3" />
+          <input name="email" type="email" placeholder="Email Address" maxLength={254} required className="w-full rounded border p-3" />
+          <input name="phone" type="tel" placeholder="Phone Number" maxLength={32} required className="w-full rounded border p-3" />
+          <input name="city" type="text" placeholder="City" maxLength={120} required className="w-full rounded border p-3" />
+          <textarea name="reason" rows={4} placeholder="Why do you want to volunteer?" maxLength={2000} required className="w-full rounded border p-3" />
+          <button type="submit" className="rounded bg-green-600 px-6 py-3 text-white">Register</button>
+          {message && <p className="font-bold text-green-600" aria-live="polite">{message}</p>}
+          {error && <p className="font-bold text-red-600">{error}</p>}
         </form>
       </main>
     </>
   );
 }
-

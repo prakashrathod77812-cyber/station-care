@@ -1,104 +1,43 @@
 "use client";
 
 import { useState } from "react";
+import { registerNgo } from "../actions";
 import Navbar from "../components/Navbar";
 
 export default function NGOPage() {
-  const [ngoName, setNgoName] = useState("");
-  const [contactPerson, setContactPerson] = useState("");
-  const [email, setEmail] = useState("");
-  const [coverageArea, setCoverageArea] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+    const result = await registerNgo(new FormData(event.currentTarget));
 
-    const ngo = {
-      ngoName,
-      contactPerson,
-      email,
-      coverageArea,
-      date: new Date().toLocaleString(),
-    };
+    if ("error" in result) {
+      setError(result.error);
+      return;
+    }
 
-    const existingNGOs =
-      JSON.parse(localStorage.getItem("ngos") || "[]");
-
-    existingNGOs.push(ngo);
-
-    localStorage.setItem(
-      "ngos",
-      JSON.stringify(existingNGOs)
-    );
-
-    setMessage("✅ NGO registered successfully!");
-
-    setNgoName("");
-    setContactPerson("");
-    setEmail("");
-    setCoverageArea("");
-  };
+    event.currentTarget.reset();
+    setMessage(result.success);
+  }
 
   return (
     <>
       <Navbar />
-
       <main className="p-10">
-        <h1 className="text-4xl font-bold mb-6">
-          NGO Registration
-        </h1>
-
-        <form
-          onSubmit={handleSubmit}
-          className="max-w-xl space-y-4"
-        >
-          <input
-            type="text"
-            placeholder="NGO Name"
-            value={ngoName}
-            onChange={(e) => setNgoName(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Contact Person"
-            value={contactPerson}
-            onChange={(e) => setContactPerson(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Coverage Area"
-            value={coverageArea}
-            onChange={(e) => setCoverageArea(e.target.value)}
-            className="border p-3 w-full rounded"
-          />
-
-          <button
-            type="submit"
-            className="bg-blue-700 text-white px-6 py-3 rounded"
-          >
-            Register NGO
-          </button>
-
-          {message && (
-            <p className="text-green-600 font-bold">
-              {message}
-            </p>
-          )}
+        <h1 className="mb-6 text-4xl font-bold">NGO Registration</h1>
+        <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
+          <input name="ngoName" type="text" placeholder="NGO Name" maxLength={160} required className="w-full rounded border p-3" />
+          <input name="contactPerson" type="text" placeholder="Contact Person" maxLength={120} required className="w-full rounded border p-3" />
+          <input name="email" type="email" placeholder="Email Address" maxLength={254} required className="w-full rounded border p-3" />
+          <input name="coverageArea" type="text" placeholder="Coverage Area" maxLength={240} required className="w-full rounded border p-3" />
+          <button type="submit" className="rounded bg-blue-700 px-6 py-3 text-white">Register NGO</button>
+          {message && <p className="font-bold text-green-600" aria-live="polite">{message}</p>}
+          {error && <p className="font-bold text-red-600">{error}</p>}
         </form>
       </main>
     </>
   );
 }
-
